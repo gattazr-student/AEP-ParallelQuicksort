@@ -1,3 +1,4 @@
+#!/bin/sh
 
 OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
 mkdir -p $OUTPUT_DIRECTORY

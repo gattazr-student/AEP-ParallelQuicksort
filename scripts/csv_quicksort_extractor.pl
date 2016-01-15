@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 
 use strict;
 
@@ -10,9 +11,9 @@ while($line=<>) {
     if($line =~/^Size: ([\d\.]*)$/) {
         $size = $1;
         next;
-    } 
+    }
     if($line =~/^(.*) quicksort.*: ([\d\.]*) sec.$/) {
         print "$size, \"$1\", $2\n" ;
         next;
-    } 
+    }
 }
