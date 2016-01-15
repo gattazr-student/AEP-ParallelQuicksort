@@ -9,11 +9,11 @@ PEDANTIC_PARANOID_FREAK =       -g -Wall -Wshadow -Wcast-align \
 REASONABLY_CAREFUL_DUDE =	-g -Wall -O2
 NO_PRAYER_FOR_THE_WICKED =	-w -O3
 WARNINGS = 			$(PEDANTIC_PARANOID_FREAK)
-CFLAGS = $(WARNINGS) -pthread -lrt -std=c99 
-LIBS = 
+CFLAGS = $(WARNINGS) -std=c99 
+LIBS =
 
 %: %.o
-	$(CC) $(INCLUDES) $(DEFS) $(CFLAGS) $^ $(LIBS) -o $@ 
+	$(CC) $(INCLUDES) $(DEFS) $(CFLAGS) $^ $(LIBS) -o $@
 
 %.o: %.c
 	$(CC) $(INCLUDES) $(DEFS) $(CFLAGS) -c -o $@ $<
