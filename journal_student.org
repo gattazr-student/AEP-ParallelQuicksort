@@ -46,8 +46,7 @@ I obtained the following script :
     done
 #+end_src
 
-Using this script, I had the following results :
-[[file:remiBookPro13_2016-01-21/measurements_12\:31.txt][output]].
+Using this script, I had the following [[file:data/remiBookPro13_2016-01-21/measurements_12:31.txt][results]].
 
 This file follows the exact same syntax as the one created by the previous experiment. I was thus able to use the script csv_quicksort_extractor.pl to create a csv.
 
@@ -56,13 +55,13 @@ This file follows the exact same syntax as the one created by the previous exper
 #+end_src
 
 Using the CSV, I was then able to draw the results :
-#+begin_src R :results output graphics :file data/remiBookPro13_2016-01-21/measurements_12\:31.png :exports both :width 600 :height 400 :session
+#+begin_src R :results output graphics :file data/remiBookPro13_2016-01-21/measurements_12:31.png :exports both :width 600 :height 400 :session
   df <- read.csv("data/remiBookPro13_2016-01-21/measurements_12\:31.csv",header=T)
   plot(df$Size,df$Time,col=c("red","blue","green")[df$Type])
 #+end_src
 
 #+RESULTS:
-[[file:data/remiBookPro13_2016-01-21/measurements_12\:31.png]]
+[[file:data/remiBookPro13_2016-01-21/measurements_12:31.png]]
 
 The results for the sequential and the Built-in version seems coherent with the previous estimation. The Parallel one however doesn't. The deviance between the values found seems to be big.
 
