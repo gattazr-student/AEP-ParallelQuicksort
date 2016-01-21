@@ -1,0 +1,76 @@
+# -*- coding: utf-8 -*-
+#+STARTUP:
+#+TITLE:       Experimentations on sorting algorithms
+#+AUTHOR:      Rémi GATTAZ
+#+LANGUAGE:    en
+#+TAGS: IMPORTANT(i) TEST(t) DEPRECATED(d) noexport(n)
+
+
+* Preparation
+
+** Compilation
+As I work on OSX, and the project is prepared for students working using linux, the compilation chain that was given didn't work for me. To compile the project without errors, I had to remove the options "-pthread", "-lrt" and "-finline-functions" from the Makefile.
+
+
+** Scripts
+To be able to use the script more easily, I made them executable.
+
+: chmod a+x scripts/*
+
+
+* Experiments
+
+** Experiment 1 :
+
+For this first experiment, we decided to redo the given tests but make a bit more iterations. The idea is to see if the first approximation that is given by the teacher seems to be coherent or not.
+
+So I modified the run_benchmark.sh script to make 30 tests for every array size.
+
+Also, to reflect on the usage of the machine a bit better on the results, we inverted the two loops of the scripts. Instead of making for every size n tests, we make n tests of every size. (This last sentence is probably not clear :-))
+
+I obtained the following script :
+#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking2.sh
+    #!/bin/sh
+
+    OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
+    mkdir -p $OUTPUT_DIRECTORY
+    OUTPUT_FILE=$OUTPUT_DIRECTORY/measurements_`date +%R`.txt
+
+    touch $OUTPUT_FILE
+    for rep in `seq 1 30`; do
+        echo "Seq = $rep"
+        for i in 100 1000 10000 100000 1000000; do
+            echo "Size: $i" >> $OUTPUT_FILE;
+            ./src/parallelQuicksort $i >> $OUTPUT_FILE;
+        done ;
+    done
+#+end_src
+
+Using this script, I had the following results :
+[[file:remiBookPro13_2016-01-21/measurements_12\:31.txt][output]].
+
+This file follows the exact same syntax as the one created by the previous experiment. I was thus able to use the script csv_quicksort_extractor.pl to create a csv.
+
+#+begin_src sh :results output :exports both
+./scripts/csv_quicksort_extractor.pl < data/remiBookPro13_2016-01-21/measurements_12\:31.txt > data/remiBookPro13_2016-01-21/measurements_12\:31.csv
+#+end_src
+
+Using the CSV, I was then able to draw the results :
+#+begin_src R :results output graphics :file data/remiBookPro13_2016-01-21/measurements_12\:31.png :exports both :width 600 :height 400 :session
+  df <- read.csv("data/remiBookPro13_2016-01-21/measurements_12\:31.csv",header=T)
+  plot(df$Size,df$Time,col=c("red","blue","green")[df$Type])
+#+end_src
+
+#+RESULTS:
+[[file:data/remiBookPro13_2016-01-21/measurements_12\:31.png]]
+
+The results for the sequential and the Built-in version seems coherent with the previous estimation. The Parallel one however doesn't. The deviance between the values found seems to be big.
+
+
+** Experiment 2 :
+
+
+
+** Ideas for next experiments :
+- Try to change the number of available threads used in the paralleled version of the quicksort.
+- Try to be even more fair as how tests are chained. The best way to do this is to use R to generate the experiments description and to then shuffle them. The goal is to retrieve a list of the test to do.
