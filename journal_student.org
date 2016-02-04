@@ -24,7 +24,7 @@ To be able to use the script more easily, I made them executable.
 
 For this first experiment, we decided to redo the given tests but make a bit more iterations. The idea is to see if the first approximation that is given by the teacher seems to be coherent or not.
 
-So I modified the run_benchmark.sh script to make 30 tests for every array size.
+So I modified the run-benchmark.sh script to make 30 tests for every array size.
 
 Also, to reflect on the usage of the machine a bit better on the results, we inverted the two loops of the scripts. Instead of making for every size n tests, we make n tests of every size. (This last sentence is probably not clear :-))
 
@@ -43,7 +43,7 @@ I obtained the following script :
             echo "Size: $i" >> $OUTPUT_FILE;
             ./src/parallelQuicksort $i >> $OUTPUT_FILE;
         done ;
-    done
+    donesds
 #+end_src
 
 Using this script, I had the following [[file:data/remiBookPro13_2016-01-21/measurements_12:31.txt][results]].
@@ -51,14 +51,39 @@ Using this script, I had the following [[file:data/remiBookPro13_2016-01-21/meas
 This file follows the exact same syntax as the one created by the previous experiment. I was thus able to use the script csv_quicksort_extractor.pl to create a csv.
 
 #+begin_src sh :results output :exports both
-./scripts/csv_quicksort_extractor.pl < data/remiBookPro13_2016-01-21/measurements_12\:31.txt > data/remiBookPro13_2016-01-21/measurements_12\:31.csv
+./scripts/csv_quicksort_extractor.pl < data/remiBookPro13_2016-01-21/measurements_12:31.txt > data/remiBookPro13_2016-01-21/measurements_12:31.txt:31.csv
 #+end_src
 
 Using the CSV, I was then able to draw the results :
 #+begin_src R :results output graphics :file data/remiBookPro13_2016-01-21/measurements_12:31.png :exports both :width 600 :height 400 :session
-  df <- read.csv("data/remiBookPro13_2016-01-21/measurements_12\:31.csv",header=T)
-  plot(df$Size,df$Time,col=c("red","blue","green")[df$Type])
+    df <- read.csv("data/remiBookPro13_2016-01-21/measurements_12:31.csv",header=T)
+    plot(df$Size,df$Time,col=c("red","blue","green")[df$Type])
 #+end_src
+
+#+begin_src R results output :session :exports both
+    library(dplyr)
+    df_mine <- df %>% group_by(Size, Type) %>%
+                      select(Time) %>%
+                      summarise( num = n(),
+			         Time_mean = mean(Time),
+				 Time_sd = sd(Time),
+				 Time_se = 2*Time_sd/sqrt(num)
+			       )
+    df_mine
+#+end_src
+
+#+begin_src R :results output graphics :file data/remiBookPro13_2016-01-21/measurements_12:31.png :exports both :width 600 :height 400 :session
+    library(ggplot)
+
+    ggplot(data = df_mine,
+           aes(x=Size , y=Time_mean, ymin=Time_mean-Time_se, ymax=Time_mean+Time_se, color=Type) ) +
+	   geom_crossbar() +
+	   geom_point() +
+	   geom_line();
+
+#+end_src
+
+
 
 #+RESULTS:
 [[file:data/remiBookPro13_2016-01-21/measurements_12:31.png]]
@@ -66,10 +91,65 @@ Using the CSV, I was then able to draw the results :
 The results for the sequential and the Built-in version seems coherent with the previous estimation. The Parallel one however doesn't. The deviance between the values found seems to be big.
 
 
-** Experiment 2 :
+** Experiment 2 : Test Routines
+
+
+During this experiment, we will not generate a new tests bu try to make the previous one more fair. Our goal is 
+to create a test protocol in which tests are sequentially made in a random order. 
+
+On top of this, we will not store the test routine. That way, if the experiment is run several times, there are no guarantees
+that the tests will be executed in the same order.
+
+#+begin_src R foo :results output :exports both :tangle scripts/generator_experiment2.R
+    #!/usr/bin/env Rscript
+
+    nbTests <- 5
+    sizes <- c(100, 1000, 10000, 100000, 1000000)
+    options(scipen=999) #disable the scientific notation
+
+    # First, create a vector containing all array sizes
+    vectTests = c();
+    i <- 1
+    for(size in sizes){
+        for(rep in 1:nbTests){
+            vectTests[i] <- size
+            i <- i + 1
+        }
+    }
+
+    # Then, shuffle this array by making a sample
+    vectTests <- sample(vectTests)
+
+    # Finally, write each element of this vector on a line in stdout
+    cat(vectTests, sep='\n')
+#+end_src
+
+In this version, the test routine is simply a list of sizes. Each line contains a number that represents the size 
+of the array that must be sorted.
+
+Beeing runnable, this R script can thus be run using a bash file.
+
+#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking3.sh
+    #!/bin/sh
+
+    OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
+    mkdir -p $OUTPUT_DIRECTORY
+    OUTPUT_FILE=$OUTPUT_DIRECTORY/measurements_`date +%R`.txt
+
+    rm -f $OUTPUT_FILE
+    touch $OUTPUT_FILE
+    scripts/generator_exp2.R | xargs -n1 -I {size} \
+        sh -c 'echo "Size: "{size}; ./src/parallelQuicksort {size}' >> $OUTPUT_FILE
+#+end_src
+
+Using this scripts, I was able to get the following [[file:data/remiBookPro13_2016-02-04/measurements_19:24.txt][results]]
+
+As the goal of this experiment was not to have new results but to have a good way to use R to generate tests routines,
+ I did not analyse these results.
 
 
 
 ** Ideas for next experiments :
 - Try to change the number of available threads used in the paralleled version of the quicksort.
-- Try to be even more fair as how tests are chained. The best way to do this is to use R to generate the experiments description and to then shuffle them. The goal is to retrieve a list of the test to do.
+
+1
