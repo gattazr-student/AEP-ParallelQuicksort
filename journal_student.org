@@ -9,7 +9,9 @@
 * Preparation
 
 ** Compilation
-As I work on OSX, and the project is prepared for students working using linux, the compilation chain that was given didn't work for me. To compile the project without errors, I had to remove the options "-pthread", "-lrt" and "-finline-functions" from the Makefile.
+As I work on OSX, and the project is prepared for students working using linux, the compilation
+chain that was given didn't work for me. To compile the project without errors, I had to remove the
+options "-pthread", "-lrt" and "-finline-functions" from the Makefile.
 
 
 ** Scripts
@@ -22,14 +24,16 @@ To be able to use the script more easily, I made them executable.
 
 ** Experiment 1 :
 
-For this first experiment, we decided to redo the given tests but make a bit more iterations. The idea is to see if the first approximation that is given by the teacher seems to be coherent or not.
+For this first experiment, we decided to redo the given tests but make a bit more iterations. The
+idea is to see if the first approximation that is given by the teacher seems to be coherent or not.
 
 So I modified the run-benchmark.sh script to make 30 tests for every array size.
 
-Also, to reflect on the usage of the machine a bit better on the results, we inverted the two loops of the scripts. Instead of making for every size n tests, we make n tests of every size. (This last sentence is probably not clear :-))
+Also, to reflect on the usage of the machine a bit better on the results, we inverted the two loops
+of the scripts. Instead of making for every size n tests, we make n tests of every size.
 
 I obtained the following script :
-#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking2.sh
+#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking1.sh
     #!/bin/sh
 
     OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
@@ -46,12 +50,14 @@ I obtained the following script :
     donesds
 #+end_src
 
-Using this script, I had the following [[file:data/remiBookPro13_2016-01-21/measurements_12:31.txt][results]].
+Using this script, I had the following
+[[file:data/remiBookPro13_2016-01-21/measurements_12:31.txt][results]].
 
-This file follows the exact same syntax as the one created by the previous experiment. I was thus able to use the script csv_quicksort_extractor.pl to create a csv.
+This file follows the exact same syntax as the one created by the previous experiment. I was thus
+able to use the script csv_quicksort_extractor.pl to create a csv.
 
 #+begin_src sh :results output :exports both
-./scripts/csv_quicksort_extractor.pl < data/remiBookPro13_2016-01-21/measurements_12:31.txt > data/remiBookPro13_2016-01-21/measurements_12:31.txt:31.csv
+    ./scripts/csv_quicksort_extractor.pl < data/remiBookPro13_2016-01-21/measurements_12:31.txt > data/remiBookPro13_2016-01-21/measurements_12:31.txt:31.csv
 #+end_src
 
 Using the CSV, I was then able to draw the results :
@@ -60,15 +66,18 @@ Using the CSV, I was then able to draw the results :
     plot(df$Size,df$Time,col=c("red","blue","green")[df$Type])
 #+end_src
 
+#+RESULTS:
+[[file:data/remiBookPro13_2016-01-21/measurements_12:31.png]]
+
 #+begin_src R results output :session :exports both
     library(dplyr)
     df_mine <- df %>% group_by(Size, Type) %>%
                       select(Time) %>%
                       summarise( num = n(),
-			         Time_mean = mean(Time),
-				 Time_sd = sd(Time),
-				 Time_se = 2*Time_sd/sqrt(num)
-			       )
+                            Time_mean = mean(Time),
+                            Time_sd = sd(Time),
+                            Time_se = 2*Time_sd/sqrt(num)
+                      )
     df_mine
 #+end_src
 
@@ -76,10 +85,10 @@ Using the CSV, I was then able to draw the results :
     library(ggplot)
 
     ggplot(data = df_mine,
-           aes(x=Size , y=Time_mean, ymin=Time_mean-Time_se, ymax=Time_mean+Time_se, color=Type) ) +
-	   geom_crossbar() +
-	   geom_point() +
-	   geom_line();
+        aes(x=Size , y=Time_mean, ymin=Time_mean-Time_se, ymax=Time_mean+Time_se, color=Type) ) +
+        geom_crossbar() +
+        geom_point() +
+        geom_line();
 
 #+end_src
 
@@ -88,17 +97,18 @@ Using the CSV, I was then able to draw the results :
 #+RESULTS:
 [[file:data/remiBookPro13_2016-01-21/measurements_12:31.png]]
 
-The results for the sequential and the Built-in version seems coherent with the previous estimation. The Parallel one however doesn't. The deviance between the values found seems to be big.
+The results for the sequential and the Built-in version seems coherent with the previous estimation.
+The Parallel one however doesn't. The deviance between the values found seems to be big.
 
 
 ** Experiment 2 : Test Routines
 
 
-During this experiment, we will not generate a new tests bu try to make the previous one more fair. Our goal is 
-to create a test protocol in which tests are sequentially made in a random order. 
+During this experiment, we will not generate a new tests bu try to make the previous one more fair.
+Our goal is to create a test protocol in which tests are sequentially made in a random order.
 
-On top of this, we will not store the test routine. That way, if the experiment is run several times, there are no guarantees
-that the tests will be executed in the same order.
+On top of this, we will not store the test routine. That way, if the experiment is run several
+times, there are no guarantees that the tests will be executed in the same order.
 
 #+begin_src R foo :results output :exports both :tangle scripts/generator_experiment2.R
     #!/usr/bin/env Rscript
@@ -124,12 +134,12 @@ that the tests will be executed in the same order.
     cat(vectTests, sep='\n')
 #+end_src
 
-In this version, the test routine is simply a list of sizes. Each line contains a number that represents the size 
-of the array that must be sorted.
+In this version, the test routine is simply a list of sizes. Each line contains a number that
+represents the size of the array that must be sorted.
 
 Beeing runnable, this R script can thus be run using a bash file.
 
-#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking3.sh
+#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking2.sh
     #!/bin/sh
 
     OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
@@ -142,14 +152,173 @@ Beeing runnable, this R script can thus be run using a bash file.
         sh -c 'echo "Size: "{size}; ./src/parallelQuicksort {size}' >> $OUTPUT_FILE
 #+end_src
 
-Using this scripts, I was able to get the following [[file:data/remiBookPro13_2016-02-04/measurements_19:24.txt][results]]
+Using this scripts, I was able to get the following
+[[file:data/remiBookPro13_2016-02-04/measurements_19:24.txt][results]]
 
-As the goal of this experiment was not to have new results but to have a good way to use R to generate tests routines,
- I did not analyse these results.
+As the goal of this experiment was not to have new results but to have a good way to use R to
+generate tests routines, I did not analyse these results.
 
 
+** Experiment 3 : Thread levels
+
+In the parallel quicksort, the number of available theads is set to 10. During this experiment, we
+will try to modify this value to see how it impacts the results. For this experiment we will have to
+use exactly the same data for every thread level we try. it implies we will need to manually set the
+seed in the C programm generating the random arrays.
+
+Before this, we need to modify the source code of our sorting program to take handle more
+parameters : a seed and a thread level.
+
+#+begin_src C
+int main(int argc, char *argv[])
+{
+    // [...]
+    int NUM = DNUM;
+    int seed = time(NULL);
+    int THREAD_LEVEL = DTHREAD_LEVEL;
+    if (argc == 2)              //user specified list size.
+    {
+        NUM = atoi(argv[1]);
+    }else if (argc == 4)        //user specified list size, seed and thread level.
+    {
+        NUM = atoi(argv[1]);
+        seed = atoi(argv[2]);
+        THREAD_LEVEL = atoi(argv[3]);
+    }
+
+    srand(seed);                //initialisation of seed
+#+end_src
+
+During the previous experiments, the number of threads used during the parrallel quicksort was
+fixed. In this experiment, we will create a routine in which this number will vary.
+
+To do, we created the following R script to generate the routine :
+
+#+begin_src R foo :results output :exports both :tangle scripts/generator_experiment3.R
+    #!/usr/bin/env Rscript
+
+    nbTests <- 15
+    sizes <- c(100, 1000, 10000, 100000, 1000000)
+    threadsLevels <- c(4, 6, 8, 10, 12, 14, 16)
+    seeds <- c()
+    options(scipen=999) #disable the scientific notation
+
+    # First, generate seeds (one for every size for every repetition)
+    testsSeeds <- round(runif(nbTests * length(sizes), 1, 100000000))
+
+    # Then, create a vector containing the array sizes
+    testsSizes = c();
+    i <- 1
+    for(size in sizes){
+        for(rep in 1:nbTests){
+            testsSizes[i] <- size
+            i <- i + 1
+        }
+    }
+
+    # Now, we will replicate the testsSizes and testsSeeds to run them for every threadLevel
+    # We also create the testsLevels vector
+    testsSizes <- rep(testsSizes, length(threadsLevels))
+    testsSeeds <- rep(testsSeeds, length(threadsLevels))
+    testsLevels <- rep(threadsLevels, each=nbTests * length(sizes))
+
+    # Finally, creation of the dataframe
+    testsDF <- data.frame(testsSizes, testsSeeds, testsLevels)
+    # and shuffle
+    testsDF <- testsDF[sample(nrow(testsDF)),]
+
+
+    # print the dataframe without the row and column names
+    # On each line, there is the size, the seed to use and the thread level
+    write.table(testsDF, row.names = FALSE, col.names=FALSE)
+#+end_src
+
+The script we used during the second experiment was simply creating a vector and shuffling it. This
+time however, we needed to create a dataframe since we are now handling several information per
+test.
+
+The data contained in the routine this script creates is a bit different than the one we had in the
+previous experiment. Since we have several data per line, we will have  as there are now 3
+informations per line. We will have to adapt a bit the script used in the previous experiment.
+
+#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking3.sh
+    #!/bin/sh
+
+    OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
+    mkdir -p $OUTPUT_DIRECTORY
+    OUTPUT_FILE=$OUTPUT_DIRECTORY/measurements_`date +%R`.txt
+
+    rm -f $OUTPUT_FILE
+    touch $OUTPUT_FILE
+    scripts/generator_exp3.R | xargs -n1 -I {args} \
+        sh -c 'echo "Args: "{args}; ./src/parallelQuicksort {args}' >> $OUTPUT_FILE
+#+end_src
+
+Running this created the following [[file:data/sama_2014-02-04/measurements_23:17.txt][output]]
+
+Now, to use the data, we need to tranform the text file we just created into a csv. The two perl
+scripts used before cannot be used anymore either. We thus created the following script :
+
+#+begin_src perl :results output raw :exports both :tangle scripts/csv_quicksort_extractor3.pl
+    #!/usr/bin/perl
+
+    use strict;
+
+    my($line);
+    my($size,$seed,$level);
+    my($seq,$par,$libc);
+    print "Size, Seed, Level, Seq, Par, Libc\n" ;
+    while($line=<>) {
+        chomp $line;
+
+        if($line =~/Args: (\d+) (\d+) (\d+)$/) {
+            $size = $1;
+            $seed = $2;
+            $level = $3;
+            next;
+        }
+        if($line =~/^Sequential quicksort.*: ([\d\.]*) sec.$/) {
+            $seq=$1; next;
+        }
+        if($line =~/^Parallel quicksort.*: ([\d\.]*) sec.$/) {
+            $par=$1; next;
+        }
+        if($line =~/^Built-in quicksort.*: ([\d\.]*) sec.$/) {
+            $libc=$1;
+            print "$size, $seed, $level, $seq, $par, $libc\n";
+            next;
+        }
+    }
+#+end_src
+
+I can use this extractor just like the others.
+
+#+begin_src sh :results output :exports both
+    perl scripts/csv_quicksort_extractor3.pl < data/remiBookPro13_2016-02-04/measurements_23:17.txt > data/remiBookPro13_2016-02-04/measurements_23:17.csv
+#+end_src
+
+Now, we can load the data into R.
+#+begin_src R results output :session :exports both
+    df <- read.csv("data/remiBookPro13_2016-02-04/measurements_23:17.csv",header=T)
+    library(dplyr)
+    #df_mine <- df %>% group_by(Size, Type) %>%
+    #                  select(Time) %>%
+    #                  summarise( num = n(),
+    #                        Time_mean = mean(Time),
+    #                        Time_sd = sd(Time),
+    #                        Time_se = 2*Time_sd/sqrt(num)
+    #                  )
+    #df_mine
+#+end_src
+
+#+begin_src R :results output graphics :file data/sama_2016-02-04/measurements_23:17_t4.png :exports both :width 600 :height 400 :session
+    #library(ggplot)
+
+    #ggplot(data = df_mine,
+    #    aes(x=Size , y=Time_mean, ymin=Time_mean-Time_se, ymax=Time_mean+Time_se, color=Type) ) +
+    #    geom_crossbar() +
+    #    geom_point() +
+    #    geom_line();
+#+end_src
 
 ** Ideas for next experiments :
-- Try to change the number of available threads used in the paralleled version of the quicksort.
-
-1

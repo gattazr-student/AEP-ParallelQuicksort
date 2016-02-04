@@ -19,7 +19,7 @@
 #include <string.h>
 
 #define DNUM 1000000
-#define THREAD_LEVEL 10
+#define DTHREAD_LEVEL 10
 
 //for sequential and parallel implementation
 void swap(double lyst[], int i, int j);
@@ -37,7 +37,7 @@ struct thread_data {
   int high;
   int level;
 };
-//thread_data should be thread-safe, since while lyst is 
+//thread_data should be thread-safe, since while lyst is
 //shared, [low, high] will not overlap among threads.
 
 //for the builtin qsort, for fun:
@@ -55,13 +55,22 @@ int main(int argc, char *argv[])
   struct timeval start, end;
   double diff;
 
-  srand(time(NULL));            //seed random
-
   int NUM = DNUM;
+  int seed = time(NULL);
+  int THREAD_LEVEL = DTHREAD_LEVEL;
   if (argc == 2)                //user specified list size.
   {
     NUM = atoi(argv[1]);
+}else if (argc == 4)                //user specified list size, seed and thread level.
+  {
+    NUM = atoi(argv[1]);
+    seed = atoi(argv[2]);
+    THREAD_LEVEL = atoi(argv[3]);
   }
+
+  srand(time(NULL));            //seed random
+
+
   //Want to compare sorting on the same list,
   //so backup.
   double *lystbck = (double *) malloc(NUM * sizeof(double));
@@ -169,7 +178,7 @@ int partition(double lyst[], int lo, int hi)
 
 /*
 parallel quicksort top level:
-instantiate parallelQuicksortHelper thread, and that's 
+instantiate parallelQuicksortHelper thread, and that's
 basically it.
 */
 void parallelQuicksort(double lyst[], int size, int tlevel)
@@ -211,8 +220,8 @@ void parallelQuicksort(double lyst[], int size, int tlevel)
 
 /*
 parallelQuicksortHelper
--if the level is still > 0, then partition and make 
-parallelQuicksortHelper threads to solve the left and 
+-if the level is still > 0, then partition and make
+parallelQuicksortHelper threads to solve the left and
 right-hand sides, then quit. Otherwise, call sequential.
 */
 void *parallelQuicksortHelper(void *threadarg)
@@ -240,7 +249,7 @@ void *parallelQuicksortHelper(void *threadarg)
   //Now we partition our part of the lyst.
   mid = partition(my_data->lyst, my_data->low, my_data->high);
 
-  //At this point, we will create threads for the 
+  //At this point, we will create threads for the
   //left and right sides.  Must create their data args.
   struct thread_data thread_data_array[2];
 
