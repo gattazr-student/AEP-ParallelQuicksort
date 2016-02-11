@@ -81,8 +81,8 @@ Using the CSV, I was then able to draw the results :
     df_mine
 #+end_src
 
-#+begin_src R :results output graphics :file data/remiBookPro13_2016-01-21/measurements_12:31.png :exports both :width 600 :height 400 :session
-    library(ggplot)
+#+begin_src R :results output graphics :file data/remiBookPro13_2016-01-21/measurements_ggplot_12:31.png :exports both :width 600 :height 400 :session
+    library(ggplot2)
 
     ggplot(data = df_mine,
         aes(x=Size , y=Time_mean, ymin=Time_mean-Time_se, ymax=Time_mean+Time_se, color=Type) ) +
@@ -95,7 +95,7 @@ Using the CSV, I was then able to draw the results :
 
 
 #+RESULTS:
-[[file:data/remiBookPro13_2016-01-21/measurements_12:31.png]]
+[[file:data/remiBookPro13_2016-01-21/measurements_ggplot_12:31.png]]
 
 The results for the sequential and the Built-in version seems coherent with the previous estimation.
 The Parallel one however doesn't. The deviance between the values found seems to be big.
@@ -321,4 +321,6 @@ Now, we can load the data into R.
     #    geom_line();
 #+end_src
 
+
 ** Ideas for next experiments :
+- To be able to do a linear regression, instead of making tests on 10, 100, 1000... generate them using runif
