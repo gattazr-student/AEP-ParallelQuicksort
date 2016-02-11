@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
   double diff;
 
   int NUM = DNUM;
-  int seed = time(NULL);
+  int seed = 0;
   int THREAD_LEVEL = DTHREAD_LEVEL;
   if (argc == 2)                //user specified list size.
   {
@@ -68,7 +68,12 @@ int main(int argc, char *argv[])
     THREAD_LEVEL = atoi(argv[3]);
   }
 
-  srand(time(NULL));            //seed random
+  /* if seed is set to 0 or not passed as arg */
+  if(seed == 0){
+    seed = time(NULL);
+  }
+  srand(seed);            //seed random
+
 
 
   //Want to compare sorting on the same list,
