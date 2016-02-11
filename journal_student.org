@@ -298,29 +298,38 @@ I can use this extractor just like the others.
 #+end_src
 
 Now, we can load the data into R.
-#+begin_src R results output :session :exports both
+
+#+begin_src R :results output :session :exports both
     df <- read.csv("data/remiBookPro13_2016-02-04/measurements_23:17.csv",header=T)
     library(dplyr)
-    #df_mine <- df %>% group_by(Size, Type) %>%
-    #                  select(Time) %>%
-    #                  summarise( num = n(),
-    #                        Time_mean = mean(Time),
-    #                        Time_sd = sd(Time),
-    #                        Time_se = 2*Time_sd/sqrt(num)
-    #                  )
-    #df_mine
+    
+    df_extra <- df %>% group_by (Level, Size) %>%
+                   select(Par) %>%
+                   summarise (
+                       num = n(),
+                       Par_mean = mean(Par),
+                       Par_sd = sd(Par),
+                       Par_se = 2*Par_sd/sqrt(num)
+                   )
+    df_extra
 #+end_src
 
-#+begin_src R :results output graphics :file data/sama_2016-02-04/measurements_23:17_t4.png :exports both :width 600 :height 400 :session
-    #library(ggplot)
+We are trying to look at the impact of the value of Thread_level in the parallel version of the quicksort. Therefore, only the values of the parallel tests are interesting us now.
 
-    #ggplot(data = df_mine,
-    #    aes(x=Size , y=Time_mean, ymin=Time_mean-Time_se, ymax=Time_mean+Time_se, color=Type) ) +
-    #    geom_crossbar() +
-    #    geom_point() +
-    #    geom_line();
+#+begin_src R :results output graphics :file data/remiBookPro13_2016-02-04/measurements_Seq_23:17.png :exports both :width 600 :height 400 :session
+    ggplot(data = df_extra,
+        aes(x=Size , y=Par_mean, ymin=Par_mean-Par_se, ymax=Par_mean+Par_se, color=factor(Level)) ) +
+        geom_crossbar() +
+        geom_point() +
+        geom_line();
 #+end_src
 
+#+RESULTS:
+[[file:data/remiBookPro13_2016-02-04/measurements_Seq_23:17.png]]
+
+The data in that graph seems to indicate that when the array is small, using a low number of will produce better results. This is most likely due to the fact that creating threads is very expensive.
+
+On the other hand, as anyone would assume, it seems to be better to sort big arrays with more threads. But there seems to be a limit to this phenomenon as sorting 1 000 000 integers is done quicker using 8 threads than when using 10. It is most likely once again due to the cost of creating threads. If the arrays were 100 times that size, using 10 threads would be better than 8.
 
 ** Ideas for next experiments :
 - To be able to do a linear regression, instead of making tests on 10, 100, 1000... generate them using runif
