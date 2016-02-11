@@ -328,9 +328,193 @@ We are trying to look at the impact of the value of Thread_level in the parallel
 #+RESULTS:
 [[file:data/remiBookPro13_2016-02-04/measurements_Seq_23:17.png]]
 
+
 The data in that graph seems to indicate that when the array is small, using a low number of will produce better results. This is most likely due to the fact that creating threads is very expensive.
 
 On the other hand, as anyone would assume, it seems to be better to sort big arrays with more threads. But there seems to be a limit to this phenomenon as sorting 1 000 000 integers is done quicker using 8 threads than when using 10. It is most likely once again due to the cost of creating threads. If the arrays were 100 times that size, using 10 threads would be better than 8.
 
-** Ideas for next experiments :
-- To be able to do a linear regression, instead of making tests on 10, 100, 1000... generate them using runif
+
+** Experiment 4 : Linear regressions
+
+In this experiment, we will try to make a linear regression. The goal is to approximate using this regression how the system will behave with really big arrays. At first, we will do this experiment
+using the default thread_level.
+
+To be able to make a good approximation, we will have to generate tests with arrays of random sizes. The sizes are generated randomly following
+a uniform distribution between 1 and 10 000 000.
+
+The experiment generator will thus become this :
+#+begin_src R foo :results output :exports both :tangle scripts/generator_experiment4.R
+    #!/usr/bin/env Rscript
+
+    nbTests <- 1000
+    sizeMin <- 1
+    sizeMax <- 1000000
+    options(scipen=999) #disable the scientific notation
+
+    # Create a vector containing all array sizes
+    testSizes <- round(runif(nbTests, min=sizeMin, max=sizeMax))
+
+    #  Write each element of this vector on a line in stdout
+    cat(vectTests, sep='\n')
+#+end_src
+
+Now, let's run the experiment using the benchmarking4.sh script.
+
+#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking4.sh
+    #!/bin/sh
+
+    OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
+    mkdir -p $OUTPUT_DIRECTORY
+    OUTPUT_FILE=$OUTPUT_DIRECTORY/measurements_`date +%R`.txt
+
+    rm -f $OUTPUT_FILE
+    touch $OUTPUT_FILE
+    scripts/generator_exp4.R | xargs -n1 -I {size} \
+        sh -c 'echo "Size: "{size}; ./src/parallelQuicksort {size}' >> $OUTPUT_FILE
+#+end_src
+
+Using this script, I got the following [[file:data/remiBookPro13_2016-11-04/measurements_16:02.txt][results]] that I can extract with the script extractor2.pl
+#+begin_src sh :results output :exports both
+    perl scripts/csv_quicksort_extractor2.pl < data/remiBookPro13_2016-02-11/measurements_16:02.txt > data/remiBookPro13_2016-02-11/measurements_16:02.csv
+#+end_src
+
+
+#+begin_src R :results output :session :exports both
+    df <- read.csv("data/remiBookPro13_2016-02-11/measurements_16:02.csv",header=T)
+#+end_src
+
+#+RESULTS:
+
+First, let's make the regression for the Sequential quicksort.
+#+begin_src R foo :results output :exports both :session
+    reg <- lm(data=df, Seq~Size);
+
+    summary(reg)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Seq ~ Size, data = df)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.01379 -0.00708 -0.00390 -0.00009  0.65244 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5.977e-03  2.183e-03  -2.738  0.00629 ** 
+Size         2.231e-07  3.771e-09  59.169  < 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.03546 on 998 degrees of freedom
+Multiple R-squared:  0.7782,	Adjusted R-squared:  0.7779 
+F-statistic:  3501 on 1 and 998 DF,  p-value: < 2.2e-16
+#+end_example
+
+
+In this summary, we can seee that the value of R squared is only 0.77. The estimation isn't very good.
+
+#+begin_src R :results output graphics :file data/remiBookPro13_2016-02-11/measurements_linearSeq_16:02.png :exports both :width 600 :height 400 :session
+    library(ggplot2)
+
+    ggplot(data=df, aes(x=Size, y=Seq)) + 
+        geom_point() + 
+        theme_bw() + 
+        geom_smooth(method="lm")
+#+end_src
+
+#+RESULTS:
+[[file:data/remiBookPro13_2016-02-11/measurements_linearSeq_16:02.png]]
+
+We can see on this graph that some tests are standing abover the others. I was using my computer at the same
+time I was running those tests. It is therefore very likely that I created these errors.
+
+
+Here is now the liner regression of the parallel quicksort :
+
+#+begin_src R foo :results output :exports both :session
+    reg <- lm(data=df, Par~Size);
+
+    summary(reg)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Par ~ Size, data = df)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.04638 -0.00912 -0.00281  0.00457  0.66554 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 5.903e-02  2.176e-03  27.125  < 2e-16 ***
+Size        2.792e-08  3.759e-09   7.427 2.37e-13 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.03535 on 998 degrees of freedom
+Multiple R-squared:  0.05238,	Adjusted R-squared:  0.05143 
+F-statistic: 55.16 on 1 and 998 DF,  p-value: 2.375e-13
+#+end_example
+
+#+begin_src R :results output graphics :file data/remiBookPro13_2016-02-11/measurements_linearPar_16:02.png :exports both :width 600 :height 400 :session
+    library(ggplot2)
+
+    ggplot(data=df, aes(x=Size, y=Par)) + 
+        geom_point() + 
+        theme_bw() + 
+        geom_smooth(method="lm")
+#+end_src
+
+#+RESULTS:
+[[file:data/remiBookPro13_2016-02-11/measurements_linearPar_16:02.png]]
+
+
+
+And the linear regression of the libc version :
+#+begin_src R foo :results output :exports both :session
+    reg <- lm(data=df, Libc~Size);
+
+    summary(reg)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Libc ~ Size, data = df)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.02428 -0.01227 -0.00680 -0.00025  0.75446 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -7.218e-03  3.461e-03  -2.085   0.0373 *  
+Size         2.432e-07  5.979e-09  40.682   <2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.05622 on 998 degrees of freedom
+Multiple R-squared:  0.6238,	Adjusted R-squared:  0.6235 
+F-statistic:  1655 on 1 and 998 DF,  p-value: < 2.2e-16
+#+end_example
+
+#+begin_src R :results output graphics :file data/remiBookPro13_2016-02-11/measurements_linearLibc_16:02.png :exports both :width 600 :height 400 :session
+    library(ggplot2)
+
+    ggplot(data=df, aes(x=Size, y=Libc)) + 
+        geom_point() + 
+        theme_bw() + 
+        geom_smooth(method="lm")
+#+end_src
+
+#+RESULTS:
+[[file:data/remiBookPro13_2016-02-11/measurements_linearLibc_16:02.png]]
+
