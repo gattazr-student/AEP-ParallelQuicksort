@@ -81,6 +81,23 @@ Using the CSV, I was then able to draw the results :
     df_mine
 #+end_src
 
+#+RESULTS:
+|     100 | Built-in   | 30 | 1.51333333333333e-05 | 5.39305641276488e-06 | 1.96926576744614e-06 |
+|     100 | Parallel   | 30 |  0.00357706666666667 | 0.000473990901508292 | 0.000173077005872201 |
+|     100 | Sequential | 30 | 9.76666666666667e-06 | 5.21062133652443e-06 | 1.90264989642143e-06 |
+|    1000 | Built-in   | 30 | 0.000134866666666667 |  1.6747070424886e-05 |  6.1151654958918e-06 |
+|    1000 | Parallel   | 30 |   0.0418730666666667 |    0.025493520297672 |  0.00930891742483386 |
+|    1000 | Sequential | 30 | 0.000114233333333333 | 9.07320166786494e-06 | 3.31306481485542e-06 |
+|   10000 | Built-in   | 30 |            0.0015333 | 6.77587759935046e-05 |  2.4742006720388e-05 |
+|   10000 | Parallel   | 30 |    0.308353833333333 |    0.135614310013687 |   0.0495193444766635 |
+|   10000 | Sequential | 30 |  0.00146926666666667 | 7.50328357239789e-05 | 2.73981177864018e-05 |
+|  100000 | Built-in   | 30 |   0.0190496666666667 | 0.000723525198347423 | 0.000264194048038855 |
+|  100000 | Parallel   | 30 |    0.535964633333333 |     0.20120886861898 |   0.0734710907418057 |
+|  100000 | Sequential | 30 |            0.0184727 |  0.00132631837208791 | 0.000484302993884053 |
+| 1000000 | Built-in   | 30 |    0.229299533333333 |  0.00599707214617573 |  0.00218982112896424 |
+| 1000000 | Parallel   | 30 |    0.110828333333333 |   0.0163605264929475 |  0.00597401960856548 |
+| 1000000 | Sequential | 30 |    0.215302366666667 |  0.00905304025322084 |  0.00330570290712756 |
+
 #+begin_src R :results output graphics :file data/remiBookPro13_2016-01-21/measurements_ggplot_12:31.png :exports both :width 600 :height 400 :session
     library(ggplot2)
 
@@ -88,8 +105,8 @@ Using the CSV, I was then able to draw the results :
         aes(x=Size , y=Time_mean, ymin=Time_mean-Time_se, ymax=Time_mean+Time_se, color=Type) ) +
         geom_crossbar() +
         geom_point() +
-        geom_line();
-
+        geom_line() +
+        theme_bw();
 #+end_src
 
 
@@ -314,7 +331,8 @@ Now, we can load the data into R.
     df_extra
 #+end_src
 
-We are trying to look at the impact of the value of Thread_level in the parallel version of the quicksort. Therefore, only the values of the parallel tests are interesting us now.
+We are trying to look at the impact of the value of Thread_level in the parallel version of the
+quicksort. Therefore, only the values of the parallel tests are interesting us now.
 
 #+begin_src R :results output graphics :file data/remiBookPro13_2016-02-04/measurements_Seq_23:17.png :exports both :width 600 :height 400 :session
     library(ggplot2)
@@ -322,25 +340,31 @@ We are trying to look at the impact of the value of Thread_level in the parallel
         aes(x=Size , y=Par_mean, ymin=Par_mean-Par_se, ymax=Par_mean+Par_se, color=factor(Level)) ) +
         geom_crossbar() +
         geom_point() +
-        geom_line();
+        geom_line() +
+        theme_bw();
 #+end_src
 
 #+RESULTS:
 [[file:data/remiBookPro13_2016-02-04/measurements_Seq_23:17.png]]
 
 
-The data in that graph seems to indicate that when the array is small, using a low number of will produce better results. This is most likely due to the fact that creating threads is very expensive.
+The data in that graph seems to indicate that when the array is small, using a low number of will
+produce better results. This is most likely due to the fact that creating threads is very expensive.
 
-On the other hand, as anyone would assume, it seems to be better to sort big arrays with more threads. But there seems to be a limit to this phenomenon as sorting 1 000 000 integers is done quicker using 8 threads than when using 10. It is most likely once again due to the cost of creating threads. If the arrays were 100 times that size, using 10 threads would be better than 8.
+On the other hand, as anyone would assume, it seems to be better to sort big arrays with more
+threads. But there seems to be a limit to this phenomenon as sorting 1 000 000 integers is done
+quicker using 8 threads than when using 10. It is most likely once again due to the cost of creating
+threads. If the arrays were 100 times that size, using 10 threads would be better than 8.
 
 
 ** Experiment 4 : Linear regressions
 
-In this experiment, we will try to make a linear regression. The goal is to approximate using this regression how the system will behave with really big arrays. At first, we will do this experiment
+In this experiment, we will try to make a linear regression. The goal is to approximate using this
+regression how the system will behave with really big arrays. At first, we will do this experiment
 using the default thread_level.
 
-To be able to make a good approximation, we will have to generate tests with arrays of random sizes. The sizes are generated randomly following
-a uniform distribution between 1 and 10 000 000.
+To be able to make a good approximation, we will have to generate tests with arrays of random sizes.
+The sizes are generated randomly following a uniform distribution between 1 and 1 000 000.
 
 The experiment generator will thus become this :
 #+begin_src R foo :results output :exports both :tangle scripts/generator_experiment4.R
@@ -399,38 +423,39 @@ Call:
 lm(formula = Seq ~ Size, data = df)
 
 Residuals:
-     Min       1Q   Median       3Q      Max 
--0.01379 -0.00708 -0.00390 -0.00009  0.65244 
+     Min       1Q   Median       3Q      Max
+-0.01379 -0.00708 -0.00390 -0.00009  0.65244
 
 Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -5.977e-03  2.183e-03  -2.738  0.00629 ** 
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept) -5.977e-03  2.183e-03  -2.738  0.00629 **
 Size         2.231e-07  3.771e-09  59.169  < 2e-16 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Residual standard error: 0.03546 on 998 degrees of freedom
-Multiple R-squared:  0.7782,	Adjusted R-squared:  0.7779 
+Multiple R-squared:  0.7782,	Adjusted R-squared:  0.7779
 F-statistic:  3501 on 1 and 998 DF,  p-value: < 2.2e-16
 #+end_example
 
 
-In this summary, we can seee that the value of R squared is only 0.77. The estimation isn't very good.
+In this summary, we can seee that the value of R squared is only 0.77. The estimation isn't very
+good.
 
 #+begin_src R :results output graphics :file data/remiBookPro13_2016-02-11/measurements_linearSeq_16:02.png :exports both :width 600 :height 400 :session
     library(ggplot2)
 
-    ggplot(data=df, aes(x=Size, y=Seq)) + 
-        geom_point() + 
-        theme_bw() + 
+    ggplot(data=df, aes(x=Size, y=Seq)) +
+        geom_point() +
+        theme_bw() +
         geom_smooth(method="lm")
 #+end_src
 
 #+RESULTS:
 [[file:data/remiBookPro13_2016-02-11/measurements_linearSeq_16:02.png]]
 
-We can see on this graph that some tests are standing abover the others. I was using my computer at the same
-time I was running those tests. It is therefore very likely that I created these errors.
+We can see on this graph that some tests are standing abover the others. I was using my computer at
+the same time I was running those tests. It is therefore very likely that I created these errors.
 
 
 Here is now the liner regression of the parallel quicksort :
@@ -448,27 +473,27 @@ Call:
 lm(formula = Par ~ Size, data = df)
 
 Residuals:
-     Min       1Q   Median       3Q      Max 
--0.04638 -0.00912 -0.00281  0.00457  0.66554 
+     Min       1Q   Median       3Q      Max
+-0.04638 -0.00912 -0.00281  0.00457  0.66554
 
 Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
+             Estimate Std. Error t value Pr(>|t|)
 (Intercept) 5.903e-02  2.176e-03  27.125  < 2e-16 ***
 Size        2.792e-08  3.759e-09   7.427 2.37e-13 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Residual standard error: 0.03535 on 998 degrees of freedom
-Multiple R-squared:  0.05238,	Adjusted R-squared:  0.05143 
+Multiple R-squared:  0.05238,	Adjusted R-squared:  0.05143
 F-statistic: 55.16 on 1 and 998 DF,  p-value: 2.375e-13
 #+end_example
 
 #+begin_src R :results output graphics :file data/remiBookPro13_2016-02-11/measurements_linearPar_16:02.png :exports both :width 600 :height 400 :session
     library(ggplot2)
 
-    ggplot(data=df, aes(x=Size, y=Par)) + 
-        geom_point() + 
-        theme_bw() + 
+    ggplot(data=df, aes(x=Size, y=Par)) +
+        geom_point() +
+        theme_bw() +
         geom_smooth(method="lm")
 #+end_src
 
@@ -491,30 +516,48 @@ Call:
 lm(formula = Libc ~ Size, data = df)
 
 Residuals:
-     Min       1Q   Median       3Q      Max 
--0.02428 -0.01227 -0.00680 -0.00025  0.75446 
+     Min       1Q   Median       3Q      Max
+-0.02428 -0.01227 -0.00680 -0.00025  0.75446
 
 Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -7.218e-03  3.461e-03  -2.085   0.0373 *  
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept) -7.218e-03  3.461e-03  -2.085   0.0373 *
 Size         2.432e-07  5.979e-09  40.682   <2e-16 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Residual standard error: 0.05622 on 998 degrees of freedom
-Multiple R-squared:  0.6238,	Adjusted R-squared:  0.6235 
+Multiple R-squared:  0.6238,	Adjusted R-squared:  0.6235
 F-statistic:  1655 on 1 and 998 DF,  p-value: < 2.2e-16
 #+end_example
 
 #+begin_src R :results output graphics :file data/remiBookPro13_2016-02-11/measurements_linearLibc_16:02.png :exports both :width 600 :height 400 :session
     library(ggplot2)
 
-    ggplot(data=df, aes(x=Size, y=Libc)) + 
-        geom_point() + 
-        theme_bw() + 
+    ggplot(data=df, aes(x=Size, y=Libc)) +
+        geom_point() +
+        theme_bw() +
         geom_smooth(method="lm")
 #+end_src
 
 #+RESULTS:
 [[file:data/remiBookPro13_2016-02-11/measurements_linearLibc_16:02.png]]
 
+
+
+
+The approximation of the parallel quicksort look really good. Only a few points are really far from
+the line (the expected value). The same can however not be said about the sequential or the libc
+version of the quicksort. Many values seems to be far from their expected values.
+
+
+* Conclusion
+During the first two experiments, we were not able to draw conclusions on the performance of sorting
+algorithms. The goal of these two experiments were to have an approximation of the performances we
+should expect during the following experiments and to have a tool to use to generate tests more
+easily.
+
+Using the two latter experiments, we can however do the following conclusions :
+- For good performances on the parallel quicksort, the number of thread must not be too high or too
+low
+- If the number of threads used is good (coherent with the size of the array to sort) the parallel quicksort is more efficient than the sequential sort
